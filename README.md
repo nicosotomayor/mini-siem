@@ -18,6 +18,7 @@ Ideal para practicar habilidades de **Blue Team / SOC** en entornos Linux.
 
 # Descargar el repositorio
 git clone https://github.com/nicosotomayor/mini-siem.git
+
 cd mini-siem
 
 # Instalar dependencias
