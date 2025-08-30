@@ -22,6 +22,7 @@ cd mini-siem
 
 # Instalar dependencias
 sudo apt update
+
 sudo apt install python3-colorama python3-pyfiglet python3-yaml python3-requests python3-pandas -y
 
 # Ejecutar la aplicación
