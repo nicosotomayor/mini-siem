@@ -1,3 +1,5 @@
 colorama
 pyfiglet
 pyyaml
+requests
+pandas
