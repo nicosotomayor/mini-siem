@@ -99,14 +99,17 @@ def analyze_log(logfile, live=False):
                 all_ips.append(ip[0])
 
     if live:
-        with open(logfile, "r", encoding="utf-8", errors="ignore") as f:
-            f.seek(0, 2)
-            while True:
-                line = f.readline()
-                if line:
-                    process_line(line)
-                    show_results(failed_logins, error_404, successful_root, all_ips, fl_threshold, err_threshold, logfile)
-                time.sleep(1)
+        try:
+            with open(logfile, "r", encoding="utf-8", errors="ignore") as f:
+                f.seek(0, 2)
+                while True:
+                    line = f.readline()
+                    if line:
+                        process_line(line)
+                        show_results(failed_logins, error_404, successful_root, all_ips, fl_threshold, err_threshold, logfile)
+                    time.sleep(1)
+        except FileNotFoundError:
+            print(Fore.RED + f"❌ No se encontró el archivo: {logfile}")
     else:
         try:
             with open(logfile, "r", encoding="utf-8", errors="ignore") as f:
@@ -126,7 +129,7 @@ def show_results(failed_logins, error_404, successful_root, all_ips, fl_threshol
     incidents = {"failed_logins": {}, "error_404": {}, "root_logins": {}, "summary": {}}
     csv_data = []
     severity_score = 0
-    suspicious = False  # bandera de actividad sospechosa
+    suspicious = False
 
     # Fuerza bruta
     for ip, count in failed_logins.items():
@@ -183,7 +186,6 @@ def show_results(failed_logins, error_404, successful_root, all_ips, fl_threshol
     print(f"   - Logins root: {len(successful_root)}")
     print(f"   - Severidad total: {severity_score}/100")
 
-    # Exportar reportes
     if export:
         ensure_reports_dir()
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
@@ -237,7 +239,7 @@ def generate_graph(logfile):
     plt.show()
 
 # ===============================
-# Menú principal
+# Menú principal (actualizado)
 # ===============================
 def main_menu():
     while True:
@@ -253,28 +255,44 @@ def main_menu():
         opcion = input("\n👉 Selecciona una opción: ")
 
         if opcion == "1":
-            print("\n[1] /var/log/auth.log")
-            print("[2] /var/log/apache2/access.log")
-            print("[3] /var/log/syslog")
-            print("[4] Ingresar ruta manual")
+            posibles_logs = [
+                "/var/log/auth.log",
+                "/var/log/secure",
+                "/var/log/syslog",
+                "/var/log/apache2/access.log"
+            ]
+            disponibles = [log for log in posibles_logs if os.path.exists(log)]
+
+            print("\n📂 Logs disponibles para analizar:")
+            for i, log in enumerate(disponibles, 1):
+                print(f"[{i}] {log}")
+            print(f"[{len(disponibles)+1}] Ingresar ruta manual")
+            print(f"[{len(disponibles)+2}] Modo demo (simulado)")
+
             sub = input("\nSelecciona log: ")
-            if sub == "1":
-                logfile = "/var/log/auth.log"
-            elif sub == "2":
-                logfile = "/var/log/apache2/access.log"
-            elif sub == "3":
-                logfile = "/var/log/syslog"
-            elif sub == "4":
-                logfile = input("Ruta del archivo: ")
-            else:
-                print("❌ Opción inválida.")
-                continue
-            analyze_log(logfile, live=False)
+            try:
+                sub = int(sub)
+                if 1 <= sub <= len(disponibles):
+                    logfile = disponibles[sub-1]
+                elif sub == len(disponibles)+1:
+                    logfile = input("Ruta del archivo: ")
+                elif sub == len(disponibles)+2:
+                    logfile = generate_demo_log()
+                    print(f"\n⚡ Log demo generado: {logfile}")
+                else:
+                    print("❌ Opción inválida.")
+                    continue
+                analyze_log(logfile, live=False)
+            except:
+                print("❌ Selección inválida.")
             input("\nPresiona ENTER para volver al menú...")
 
         elif opcion == "2":
             logfile = input("Ruta del archivo de log: ")
-            analyze_log(logfile, live=True)
+            if logfile.strip() == "":
+                print(Fore.RED + "❌ Debes ingresar una ruta de log válida.")
+            else:
+                analyze_log(logfile, live=True)
 
         elif opcion == "3":
             config = load_config()
