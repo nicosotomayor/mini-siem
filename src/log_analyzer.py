@@ -286,13 +286,37 @@ def main_menu():
             except:
                 print("❌ Selección inválida.")
             input("\nPresiona ENTER para volver al menú...")
+elif opcion == "2":
+    posibles_logs = [
+        "/var/log/auth.log",
+        "/var/log/secure",
+        "/var/log/syslog",
+        "/var/log/apache2/access.log"
+    ]
+    disponibles = [log for log in posibles_logs if os.path.exists(log)]
 
-        elif opcion == "2":
-            logfile = input("Ruta del archivo de log: ")
-            if logfile.strip() == "":
-                print(Fore.RED + "❌ Debes ingresar una ruta de log válida.")
-            else:
-                analyze_log(logfile, live=True)
+    print("\n📂 Logs disponibles para analizar en tiempo real:")
+    for i, log in enumerate(disponibles, 1):
+        print(f"[{i}] {log}")
+    print(f"[{len(disponibles)+1}] Ingresar ruta manual")
+    print(f"[{len(disponibles)+2}] Modo demo (simulado)")
+
+    sub = input("\nSelecciona log: ")
+    try:
+        sub = int(sub)
+        if 1 <= sub <= len(disponibles):
+            logfile = disponibles[sub-1]
+        elif sub == len(disponibles)+1:
+            logfile = input("Ruta del archivo: ")
+        elif sub == len(disponibles)+2:
+            logfile = generate_demo_log()
+            print(f"\n⚡ Log demo generado: {logfile}")
+        else:
+            print("❌ Opción inválida.")
+            return
+        analyze_log(logfile, live=True)
+    except:
+        print("❌ Selección inválida.")
 
         elif opcion == "3":
             config = load_config()
@@ -343,4 +367,5 @@ def main_menu():
 # ===============================
 if __name__ == "__main__":
     main_menu()
+
 
